@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+dist/
+*.egg-info/
+.cdp-chrome/
+.DS_Store
