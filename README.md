@@ -1,125 +1,111 @@
-# cdp-agent-kit
+<p align="center">
+  <img src="https://img.shields.io/pypi/v/cdp-agent-kit?color=blue" alt="PyPI">
+  <img src="https://img.shields.io/badge/python-3.10%2B-green" alt="Python">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
+</p>
 
-> Let AI agents control your browser via Chrome DevTools Protocol.
->
-> No browser extensions. No custom drivers. Just Chrome + CDP.
+<h1 align="center">cdp-agent-kit</h1>
+<p align="center"><b>Give your AI agent a browser.</b> Not a sandbox. <i>Your</i> browser.</p>
+<p align="center">把浏览器交给 AI Agent——共享你的 cookie，你登录过的地方它都能操作。</p>
 
-## What it does
-
-cdp-agent-kit connects an LLM (Claude, GPT, DeepSeek, local models) to your **existing Chrome browser** via the CDP debugging port. The agent inherits your cookies, sessions, and logged-in state — it operates as *you*.
+---
 
 ```
-┌─────────────┐     CDP (localhost:9222)     ┌──────────────┐
-│  Your Chrome │◄──────────────────────────►│  Agent / LLM  │
-│  (cookies,   │   screenshot, snapshot,     │  decides what  │
-│   sessions)  │   click, type, navigate     │  to do next    │
-└─────────────┘                              └──────────────┘
+┌──────────────┐                              ┌──────────────┐
+│  Your Chrome │◄──── CDP (localhost:9222) ───│  AI Agent    │
+│              │                               │              │
+│  cookies ✅  │   screenshot, snapshot,       │  GPT / Claude│
+│  session ✅  │   click, type, navigate       │  DeepSeek    │
+│  logged in ✅│                               │  local LLM   │
+└──────────────┘                              └──────────────┘
 ```
 
-## Quick Start
+## Why / 为什么用它
 
-### 1. Install
+| | cdp-agent-kit | Selenium / Playwright |
+|---|---|---|
+| 登录 | ❌ 不需要，cookie 已存在 | ✅ 必须写登录脚本 |
+| Vision | ✅ 截图 → LLM vision | ❌ |
+| 给 LLM 用 | ✅ function calling 内置 | ❌ 得自己写 |
+
+## Install / 安装
 
 ```bash
 pip install cdp-agent-kit
 playwright install chromium
 ```
 
-### 2. Launch Chrome with CDP
+## Quick Start / 快速开始
 
 ```bash
+# 1. 启动 CDP Chrome
 ./scripts/start_chrome.sh
+
+# 或手动
+google-chrome --remote-debugging-port=9222
 ```
-
-Or manually:
-
-```bash
-google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/cdp-chrome
-```
-
-### 3. Use it
 
 ```python
 import asyncio
 from cdp_agent_kit import CDPBridge
 
 async def main():
-    async with CDPBridge() as bridge:
-        # Navigate (cookies included!)
-        await bridge.navigate("https://github.com")
+    async with CDPBridge() as browser:
+        # 跳转 — cookie 天然带着，不需要登录
+        await browser.navigate("https://github.com")
 
-        # Read the page
-        text = await bridge.get_page_text()
-        print(text[:200])
+        # 读页面
+        print(await browser.get_page_text()[:200])
 
-        # Take a screenshot
-        await bridge.screenshot(path="github.png")
+        # 点搜索框、输入、回车
+        await browser.click("input[name='q']")
+        await browser.type_text("input[name='q']", "cdp-agent-kit")
+        await browser.press_key("Enter")
 
-        # Click and type
-        await bridge.click("input[name='q']")
-        await bridge.type_text("input[name='q']", "cdp-agent-kit")
-        await bridge.press_key("Enter")
+        # 截图
+        await browser.screenshot(path="result.png")
 
 asyncio.run(main())
 ```
 
-## Tools for LLMs
+## LLM Tools / Agent 工具
 
-The `cdp_agent_kit.tools` module provides OpenAI/Claude-compatible function definitions:
+10 built-in tools, ready for OpenAI / Claude / DeepSeek function calling:
 
-| Tool | What it does |
-|------|-------------|
-| `browser_navigate` | Go to a URL |
-| `browser_snapshot` | Get accessibility tree (structured page view) |
-| `browser_screenshot` | Screenshot → base64 (for vision models) |
-| `browser_click` | Click by CSS selector |
-| `browser_type` | Type into input fields |
-| `browser_select` | Select dropdown options |
-| `browser_press_key` | Press Enter/Tab/Escape/etc |
-| `browser_get_text` | Extract all visible text |
-| `browser_exec_js` | Run arbitrary JavaScript |
-| `browser_list_pages` | List all open tabs |
+| Tool / 工具 | What / 做什么 |
+|---|---|
+| `browser_navigate` | Go to URL / 跳转 |
+| `browser_snapshot` | Read page structure / 读页面结构 |
+| `browser_screenshot` | Screenshot for vision / 截图给视觉模型 |
+| `browser_click` | Click element / 点击 |
+| `browser_type` | Type text / 输入 |
+| `browser_select` | Select dropdown / 选下拉框 |
+| `browser_press_key` | Press key / 按键 |
+| `browser_get_text` | Extract text / 提文字 |
+| `browser_exec_js` | Run JS / 执行脚本 |
+| `browser_list_pages` | List tabs / 列出所有标签页 |
 
 ```python
 from cdp_agent_kit.tools import TOOL_SCHEMAS, ToolExecutor
 
-# Give these schemas to your LLM as available functions
-# When the LLM calls one, execute it:
+# Feed TOOL_SCHEMAS to your LLM as available functions
+# LLM calls one → executor handles it
 executor = ToolExecutor(bridge)
 result = await executor.execute("browser_click", {"selector": "button.submit"})
 ```
 
-## Google Forms Auto-Fill Demo
+## Google Forms Demo / 自动填表
 
 ```bash
-# 1. Start Chrome with CDP
-./scripts/start_chrome.sh
-
-# 2. Run the demo
-python examples/google_forms.py "https://docs.google.com/forms/d/e/YOUR-FORM-ID/viewform"
+python examples/google_forms.py "https://docs.google.com/forms/d/e/YOUR-FORM/viewform"
 ```
 
-The agent will:
-1. Navigate to the form (already logged in via your cookies)
-2. Analyze all form fields automatically
-3. Fill them with provided data
-4. Save a confirmation screenshot
+Agent automatically detects all fields and fills them — no CSS selector hunting.
 
-## How it's different
+## Full Docs / 完整教程
 
-| | cdp-agent-kit | Selenium / Playwright scripts |
-|---|---|---|
-| Cookie/session | ✅ Shared with your browser | ❌ Fresh profile every time |
-| Login required? | ❌ Already logged in | ✅ Must script login flow |
-| Vision capability | ✅ Screenshot → LLM vision | ❌ Manual |
-| For LLMs? | ✅ Function-calling schemas built in | ❌ |
+→ [TUTORIAL.md](TUTORIAL.md) (Chinese, with LLM integration examples)
 
-## Requirements
-
-- Python 3.10+
-- Chrome / Chromium
-- Playwright (`pip install playwright && playwright install chromium`)
-
-## License
+## License / 许可
 
 MIT
