@@ -6,7 +6,7 @@
 
 <h1 align="center">cdp-agent-kit</h1>
 <p align="center"><b>Give your AI agent a browser.</b> Not a sandbox. <i>Your</i> browser.</p>
-<p align="center">把浏览器交给 AI Agent——共享你的 cookie，你登录过的地方它都能操作。</p>
+<p align="center">把真实用户浏览器作为 AI Agent 的执行环境——共享登录状态、Cookie、Session 和浏览器上下文。</p>
 
 ---
 
@@ -20,13 +20,33 @@
 └──────────────┘                              └──────────────┘
 ```
 
-## Why / 为什么用它
+## What / 这是什么
+
+**cdp-agent-kit** 是一个让 AI Agent 接管你当前 Chrome 浏览器的工具包。它通过 Chrome DevTools Protocol（CDP）连接已经打开的浏览器，而不是启动新的自动化实例，因此可以直接复用登录状态、Cookie、Session 和浏览器上下文。
+
+传统自动化工具每次都要开新浏览器 → 写登录脚本 → 过验证码 → 维护 cookie，换个网站又重来一遍。cdp-agent-kit 跳过了这一整层——Agent 操作的就是你日常用的那个 Chrome，你登录过什么它就能操作什么。
+
+核心就两个类：
+- **CDPBridge** — WebSocket 连 Chrome，截图、读 DOM、点击、输入、执行 JS，一套 API 搞定
+- **ToolExecutor** — 把上面那些操作包装成 10 个 LLM function calling 工具，任何支持 function call 的模型都能直接调
 
 | | cdp-agent-kit | Selenium / Playwright |
 |---|---|---|
 | 登录 | ❌ 不需要，cookie 已存在 | ✅ 必须写登录脚本 |
 | Vision | ✅ 截图 → LLM vision | ❌ |
 | 给 LLM 用 | ✅ function calling 内置 | ❌ 得自己写 |
+
+## Capability Validation / 能力验证
+
+实战记录见 → [EXPERIMENTS.md](EXPERIMENTS.md)
+
+| Demo | 验证能力 |
+|------|----------|
+| Cookie Clicker | 长时间循环操作与状态保持 |
+| Minesweeper | 截图→推理→操作→再截图的闭环 |
+| Google Forms | 未知页面的表单理解与自动填写 |
+| 番茄小说 | 真实网站上长流程、多步骤任务执行 |
+| React/Arco Design | 受控组件 & 中文 IME 兼容性边界 |
 
 ## Install / 安装
 
@@ -101,6 +121,10 @@ python examples/google_forms.py "https://docs.google.com/forms/d/e/YOUR-FORM/vie
 ```
 
 Agent automatically detects all fields and fills them — no CSS selector hunting.
+
+## vs Playwright MCP
+
+两者在浏览器控制能力上没有本质差异（`--cdp-endpoint` 也能连真实 Chrome）。Playwright MCP 的关注点在浏览器控制本身，Hermes 在此基础上进一步提供 AgentOS 层能力（定时任务、跨会话记忆、后台推送、多 Agent 协作）。关注点不同，不是替代关系。
 
 ## Full Docs / 完整教程
 
