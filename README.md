@@ -40,10 +40,10 @@
 
 | Demo | Platform | Validates | Recording |
 |------|----------|-----------|-----------|
-| MBTI Survey | 16personalities | 93 questions, bot detection bypass | 📹 |
-| Moodle Quiz | VTC Moodle | Form detection + auto-submit | 📹 |
-| Minesweeper | Minesweeper Online | Screenshot→reason→click loop | 📹 |
-| 番茄小说 | Fanqie Novel | Long-form workflow (create→write→publish) | 📹 |
+| MBTI Survey | 16personalities | 93 questions, bot detection bypass | ![](docs/demos/mbti.gif) |
+| Moodle Quiz | VTC Moodle | Form detection + auto-submit | ![](docs/demos/moodle.gif) |
+| Minesweeper | Minesweeper Online | Screenshot→reason→click loop | ![](docs/demos/minesweeper.gif) |
+| 番茄小说 | Fanqie Novel | Long-form workflow (create→write→publish) | 🚧 |
 | Google Forms | Google Forms | Unknown form auto-fill | [script](examples/google_forms.py) |
 
 ## What / 这是什么
