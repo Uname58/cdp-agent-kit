@@ -43,7 +43,7 @@
 | MBTI Survey | 16personalities | 93 questions, bot detection bypass | 📹 |
 | Moodle Quiz | VTC Moodle | Form detection + auto-submit | 📹 |
 | Minesweeper | Minesweeper Online | Screenshot→reason→click loop | 📹 |
-| 小红书 | Xiaohongshu | Real-platform multi-step task | 📹 |
+| 番茄小说 | Fanqie Novel | Long-form workflow (create→write→publish) | 📹 |
 | Google Forms | Google Forms | Unknown form auto-fill | [script](examples/google_forms.py) |
 
 ## What / 这是什么
