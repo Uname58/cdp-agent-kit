@@ -10,15 +10,41 @@
 
 ---
 
+## Architecture / 架构
+
 ```
-┌──────────────┐                              ┌──────────────┐
-│  Your Chrome │◄──── CDP (localhost:9222) ───│  AI Agent    │
-│              │                               │              │
-│  cookies ✅  │   screenshot, snapshot,       │  GPT / Claude│
-│  session ✅  │   click, type, navigate       │  DeepSeek    │
-│  logged in ✅│                               │  local LLM   │
-└──────────────┘                              └──────────────┘
+┌─────────────────────────────────┐
+│          AI Agent               │  ← GPT / Claude / DeepSeek
+│    (function-calling loop)      │
+└──────────────┬──────────────────┘
+               │ tool calls
+┌──────────────▼──────────────────┐
+│        ToolExecutor             │  ← 10 built-in tools
+│  navigate | click | type | ...  │
+└──────────────┬──────────────────┘
+               │ async commands
+┌──────────────▼──────────────────┐
+│         CDPBridge               │  ← WebSocket → Chrome
+│   (Chrome DevTools Protocol)    │
+└──────────────┬──────────────────┘
+               │ ws://localhost:9222
+┌──────────────▼──────────────────┐
+│     Your Existing Chrome        │  ← cookies, sessions, login state
+│   (the one you're using now)    │
+└─────────────────────────────────┘
 ```
+
+## Demo / 演示
+
+> Videos recorded on real platforms. Each demo validates a specific capability.
+
+| Demo | Platform | Validates | Recording |
+|------|----------|-----------|-----------|
+| MBTI Survey | 16personalities | 93 questions, bot detection bypass | 📹 |
+| Moodle Quiz | VTC Moodle | Form detection + auto-submit | 📹 |
+| Minesweeper | Minesweeper Online | Screenshot→reason→click loop | 📹 |
+| 小红书 | Xiaohongshu | Real-platform multi-step task | 📹 |
+| Google Forms | Google Forms | Unknown form auto-fill | [script](examples/google_forms.py) |
 
 ## What / 这是什么
 
