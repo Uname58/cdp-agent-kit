@@ -152,6 +152,46 @@ el.dispatchEvent(new Event('change', {bubbles: true}));
 
 ## 6. WSL → Windows CDP 连接配置
 
+### 前置条件：WSL2 必须使用 NAT 模式
+
+**Mirrored 网络模式会导致 Windows 和 WSL 共享同一 IP，portproxy 失效。**
+
+在 `C:\Users\<you>\.wslconfig` 中确保：
+
+```ini
+[wsl2]
+networkingMode=nat
+localhostForwarding=true
+```
+
+修改后执行 `wsl --shutdown` 重启 WSL。
+
+### 标准启动脚本
+
+**[`scripts/cdp_launcher.vbs`](scripts/cdp_launcher.vbs)** — 双击即可，自动 UAC 提权。
+
+### 关键：启动顺序（踩坑记录）
+
+**错误顺序（WSL 连不上）：**
+```
+portproxy 先绑定 0.0.0.0:9222
+  → Chrome 启动时 IPv4 端口被占
+  → Chrome 退而绑定 ::1:9222 (IPv6 only)
+  → WSL 无 IPv6 gateway → 连接超时
+```
+
+**正确顺序（✅ 可用）：**
+```
+① Kill Chrome
+② Delete portproxy  → 释放端口
+③ Start Chrome      → 干净绑定 127.0.0.1:9222
+④ Add portproxy     → 0.0.0.0→127.0.0.1 转发
+```
+
+先到先得。Chrome 必须最先拿到端口。
+
+### 命令参考
+
 ```powershell
 # Windows PowerShell (Admin)
 New-NetFirewallRule -DisplayName "CDP" -Direction Inbound -LocalPort 9222 -Protocol TCP -Action Allow
@@ -162,7 +202,7 @@ netsh interface portproxy add v4tov4 listenport=9222 listenaddress=0.0.0.0 conne
 # 启动 Chrome（Windows）
 chrome.exe --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --user-data-dir=%TEMP%\cdp-chrome
 
-# WSL 连接
+# WSL 连接（NAT 模式下 gateway = Windows host）
 curl http://172.27.64.1:9222/json
 ```
 
