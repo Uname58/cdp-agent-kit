@@ -185,6 +185,38 @@ async def main():
 asyncio.run(main())
 ```
 
+### 4. Run a demo
+
+The fastest way to confirm it works — run one of the shipped examples:
+
+```bash
+# Auto-fill a Google Form (auto-detects fields, no CSS selector hunting)
+python examples/google_forms.py "https://docs.google.com/forms/d/e/YOUR-FORM/viewform"
+
+# Post to Reddit with your logged-in account (fetch() submit, bypasses isTrusted)
+python examples/cdp_reddit_post.py
+```
+
+See [Examples](#examples) for the full list (MBTI survey, Minesweeper solver, Cookie Clicker, and more).
+
+---
+
+## What Changed Since v0.1.0
+
+The first release (v0.1.0, July 1) was a minimal proof-of-concept: a CDP bridge with `navigate`, `screenshot`, `click`, `type`, plus a Google Forms auto-fill demo. Here is what has changed since:
+
+| Area | v0.1.0 | Now |
+|------|--------|-----|
+| **Positioning** | "Let AI control your browser via CDP" | **Agent Browser Runtime** — connect to the browser you already use |
+| **Tools** | 5 core tools | **10 tools** — added `browser_select`, `browser_press_key`, `browser_list_pages`, `browser_get_text`, `browser_exec_js` |
+| **Platforms** | macOS / Linux only | **+ Windows** — WSL2 → Windows Chrome via NAT mode + portproxy + `cdp_launcher.vbs` |
+| **Validation** | None (toy examples) | **EXPERIMENTS.md** — 7 real websites, incl. `isTrusted` defeat, `fetch()` submit bypass |
+| **Demos** | Google Forms auto-fill | **+ Reddit auto-post, MBTI survey, Moodle, Minesweeper solver, Cookie Clicker** |
+| **Integrations** | OpenAI / Claude tool schemas | **+ CLI-Anything harness, SKILL.md, demo GIFs** |
+| **Architecture** | Single bridge module | **Layered** — LLM → ToolExecutor → CDPBridge → Chrome |
+
+The core idea never changed — control your *existing* browser, inherit cookies/logins/sessions, skip the login script. Everything added since v0.1.0 makes that idea work on more platforms, against harder real-world targets, and with richer tool coverage.
+
 ---
 
 ## LLM Integration
