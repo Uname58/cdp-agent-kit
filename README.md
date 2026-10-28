@@ -140,6 +140,12 @@ Two layers:
 
 ```bash
 pip install git+https://github.com/Uname58/cdp-agent-kit.git
+```
+
+The core (`CDPClient`, raw CDP) needs only `websocket-client` — auto-installed, no Playwright. For the optional Playwright-based bridge (`CDPBridge`):
+
+```bash
+pip install "cdp-agent-kit[playwright]"
 playwright install chromium
 ```
 
@@ -159,31 +165,37 @@ chrome.exe --remote-debugging-port=9222 --remote-debugging-address=0.0.0.0 --use
 
 ### 3. Use It
 
+The core is `CDPClient` — a raw CDP client, synchronous, zero Playwright:
+
 ```python
-import asyncio
-from cdp_agent_kit import CDPBridge
+from cdp_agent_kit import CDPClient
 
-async def main():
-    async with CDPBridge("http://localhost:9222") as bridge:
-        # Navigate — cookies are already there
-        await bridge.navigate("https://github.com")
+# Connect to your existing Chrome (cookies, logins, tabs already there)
+client = CDPClient("localhost", 9222)
 
-        # Read the page
-        title = await bridge.execute_js("document.title")
-        print(f"Page: {title}")
+# List tabs
+for t in client.list_tabs():
+    print(t["title"], "—", t["url"])
 
-        # Click something
-        await bridge.click("input[name='q']")
+# Navigate (cookies included)
+client.navigate("https://github.com")
 
-        # Type and search
-        await bridge.type_text("input[name='q']", "cdp-agent-kit")
-        await bridge.press_key("Enter")
+# Read the page
+text = client.read_page_text()
+print(text[:200])
 
-        # Screenshot
-        await bridge.screenshot(path="result.png")
+# Click + fill a form
+client.click("input[name='q']")
+client.fill_form("input[name='q']", "cdp-agent-kit")
 
-asyncio.run(main())
+# Security testing: black-box XSS verification (detects the alert dialog)
+result = client.verify_xss("https://target/?q=<script>alert(1)</script>")
+print(result)  # {"status": "CONFIRMED", ...} or INCONCLUSIVE
 ```
+
+`CDPClient` also auto-heals — if the WebSocket hangs or drops, it restarts the debug Chrome and retries once. Cross-platform: WSL gateway-IP resolution, Windows launcher, macOS/Linux direct connect.
+
+> **Prefer the Playwright-based `CDPBridge`?** It's the async, higher-level API with structured snapshots (`get_snapshot`, `get_interactive_elements`, `scroll`) — install the `[playwright]` extra and use `CDPBridge` as before.
 
 ### 4. Run a demo
 
