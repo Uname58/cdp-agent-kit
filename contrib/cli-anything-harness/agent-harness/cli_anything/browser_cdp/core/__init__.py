@@ -5,6 +5,7 @@ Connects to an already-running Chrome with --remote-debugging-port=9222.
 """
 
 import json
+import os
 import time
 import urllib.request
 from dataclasses import dataclass, field
@@ -55,7 +56,14 @@ class CDPBackend:
         """Get WebSocket URL for a page."""
         if page_id:
             return f"{self.session.cdp_ws_base}{page_id}"
-        pages = self._get_pages()
+        # Explicit target pinning for one-shot CLI invocations:
+        # CDP_PAGE_ID=<full target id> always wins.
+        env_page = os.environ.get("CDP_PAGE_ID", "").strip()
+        if env_page:
+            return f"{self.session.cdp_ws_base}{env_page}"
+        # Only consider real page targets: the raw /json list also contains
+        # extension service workers, and picking one breaks every command.
+        pages = [p for p in self._get_pages() if p.get("type") == "page"]
         if not pages:
             raise RuntimeError("No open pages in Chrome")
         # Prefer the last active page, or the first one
